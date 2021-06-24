@@ -28,7 +28,7 @@ public class AuthCommand extends Command {
                 this.bot.getAuthAPI().createAuthToken(sender.getIdAsString(), id);
                 sender.sendMessage(new EmbedBuilder()
                         .setTitle("Minecraft-Account mit Discord-Server verknüpfen")
-                        .setDescription("**1.** Joine auf den Server.\n**2.**Führe ingame den Befehl **/auth " + id + "** aus, um dich erfolgreich zu verifizieren.\n**3.** Du bist erfolgreich verknüpft.")
+                        .setDescription("**1.** Joine auf den Server.\n**2.** Führe ingame den Befehl **/auth " + id + "** aus, um dich erfolgreich zu verifizieren.\n**3.** Du bist erfolgreich verknüpft.")
                         .setColor(Color.CYAN));
             }
         });
