@@ -15,7 +15,7 @@ public class CommandService {
     }
 
     public void handle(final MessageCreateEvent event) {
-        final String prefix = ">";
+        final String prefix = "!";
         final String message = event.getMessage().getContent();
         final String[] raw = message.split(" ");
 
@@ -39,6 +39,7 @@ public class CommandService {
                     command.execute(data, args);
             });
         }
+        event.getMessage().delete();
     }
 
 }
