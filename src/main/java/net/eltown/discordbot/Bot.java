@@ -5,11 +5,14 @@ import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
 import lombok.Getter;
 import net.eltown.discordbot.commands.AuthCommand;
+import net.eltown.discordbot.commands.ticketsystem.TicketCommand;
 import net.eltown.discordbot.components.api.AuthAPI;
+import net.eltown.discordbot.components.api.TicketAPI;
 import net.eltown.discordbot.components.messaging.AuthListener;
 import net.eltown.discordbot.components.services.CommandService;
 import net.eltown.discordbot.components.tinyrabbit.TinyRabbitListener;
 import net.eltown.discordbot.listeners.CommandListener;
+import net.eltown.discordbot.listeners.TicketListener;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.activity.ActivityType;
@@ -34,6 +37,7 @@ public class Bot {
      * API
      */
     private AuthAPI authAPI;
+    private TicketAPI ticketAPI;
 
     /**
      * Database
@@ -51,11 +55,13 @@ public class Bot {
         this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         commandService.register(
-                new AuthCommand(this)
+                new AuthCommand(this),
+                new TicketCommand(this)
         );
         this.discordApi = new DiscordApiBuilder()
                 .setToken(token)
                 .addListener(new CommandListener(this))
+                .addListener(new TicketListener(this))
                 .login().join();
         System.out.println("[bot] Bot status: Online");
         this.discordApi.updateStatus(UserStatus.DO_NOT_DISTURB);
@@ -64,6 +70,7 @@ public class Bot {
         this.authAPI = new AuthAPI(this.database, this);
         this.authListener = new AuthListener(this);
         this.authListener.startListening();
+        this.ticketAPI = new TicketAPI(this.database, this);
         this.commandService = commandService;
         System.out.println("[bot] All API Components successfully initialized.");
     }
