@@ -49,6 +49,14 @@ public class AuthAPI {
         });
     }
 
+    public void getDiscordIdByIngameName(final String ingameName, final Consumer<String> id) {
+        CompletableFuture.runAsync(() -> {
+            final Document document = this.authCollection.find(new Document("ingameName", ingameName)).first();
+            assert document != null;
+            id.accept(document.getString("_id"));
+        });
+    }
+
     public void solveAuthentification(final String token, final String ingameName) {
         CompletableFuture.runAsync(() -> {
             final String id = this.cachedToken.get(token);

@@ -16,6 +16,7 @@ import net.eltown.discordbot.listeners.TicketListener;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.activity.ActivityType;
+import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.UserStatus;
 
 import java.util.concurrent.ExecutorService;
@@ -32,6 +33,7 @@ public class Bot {
     private final DiscordApi discordApi;
     private final CommandService commandService;
     private final ExecutorService executorService;
+    private final Server server;
 
     /**
      * API
@@ -50,9 +52,10 @@ public class Bot {
      */
     private TinyRabbitListener listener;
     private AuthListener authListener;
+    private net.eltown.discordbot.components.messaging.TicketListener ticketListener;
 
     public Bot(final String token, final CommandService commandService) {
-        this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
 
         commandService.register(
                 new AuthCommand(this),
@@ -66,18 +69,21 @@ public class Bot {
         System.out.println("[bot] Bot status: Online");
         this.discordApi.updateStatus(UserStatus.DO_NOT_DISTURB);
         this.discordApi.updateActivity(ActivityType.PLAYING, "auf Eltown.net");
+        this.server = this.getDiscordApi().getServerById("794937648178397194").get();
         this.connectDatabase();
         this.authAPI = new AuthAPI(this.database, this);
         this.authListener = new AuthListener(this);
+        this.ticketListener = new net.eltown.discordbot.components.messaging.TicketListener(this);
         this.authListener.startListening();
         this.ticketAPI = new TicketAPI(this.database, this);
+        this.ticketListener.startListening();
         this.commandService = commandService;
         System.out.println("[bot] All API Components successfully initialized.");
     }
 
     private void connectDatabase() {
         try {
-            final MongoClientURI clientURI = new MongoClientURI("mongodb://root:e67bLwYNdv45g6smn3H9p32JzfsdgzYt6hNnYK323wdL@45.138.50.23:27017/admin?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false");
+            final MongoClientURI clientURI = new MongoClientURI("mongodb://root:Qco7TDqoYq3RXq4pA3y7ETQTK6AgqzmTtRGLsgbN@45.138.50.23:27017/admin?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false");
             this.databaseClient = new MongoClient(clientURI);
             this.database = databaseClient.getDatabase("eltown_bot");
             final Logger mongoLogger = Logger.getLogger("org.mongodb.driver");

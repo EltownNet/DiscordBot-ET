@@ -58,7 +58,7 @@ public class TicketCommand extends Command {
                 if (args[0].equalsIgnoreCase("create")) {
                     try {
                         final User target = this.bot.getDiscordApi().getUserById(args[1]).get();
-                        this.bot.getTicketAPI().createTicket(target, user, server);
+                        this.bot.getTicketAPI().createTicket(target, user);
                         final EmbedBuilder embed2 = new EmbedBuilder()
                                 .setDescription("Ein Ticket für <@" + target.getId() + "> wurde soeben erstellt..")
                                 .setColor(Color.GRAY);

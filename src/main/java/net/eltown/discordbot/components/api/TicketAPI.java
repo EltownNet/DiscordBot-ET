@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TicketAPI {
 
@@ -59,9 +60,10 @@ public class TicketAPI {
         });
     }
 
-    public void createTicket(final User user, final User creator, final Server server) {
+    public void createTicket(final User user, final User creator) {
         CompletableFuture.runAsync(() -> {
-            final String id = this.getTicketName();
+            final String id = "D" + this.getTicketName();
+            final Server server = this.bot.getServer();
 
             final ServerTextChannel channel = new ServerTextChannelBuilder(server)
                     .setCategory(server.getChannelCategoryById("794986203753611315").get())
@@ -79,6 +81,7 @@ public class TicketAPI {
                 final EmbedBuilder embed = new EmbedBuilder()
                         .setTitle("Ticket #ticket-" + id + " eröffnet.")
                         .setDescription("Hi <@" + user.getId() + ">!")
+                        .setThumbnail(user.getAvatar())
                         .addField("\uD83C\uDDE9\uD83C\uDDEA", "Schreibe dein Anliegen bitte hier in den Chat. Ein Supporter oder Admin wird sich um dich kümmern, sobald er/sie Zeit hat." +
                                 "\nUm das Ticket zu schließen, klicke auf das Schloss-Symbol.", true)
                         .setColor(Color.ORANGE);
@@ -104,7 +107,75 @@ public class TicketAPI {
                         channel.sendMessage(embed2);
                     }
 
-                    if (this.cachedTickets.values().size() >= 5) {
+                    if (this.cachedTickets.values().size() >= 8) {
+                        final EmbedBuilder delayEmbed = new EmbedBuilder()
+                                .setTitle("Achtung: Verzögerung")
+                                .setDescription("Ticket " + channel.getName().split("-")[2])
+                                .addField("\uD83C\uDDE9\uD83C\uDDEA", "Aktuell haben wir viele Tickets offen, weshalb sich dadurch die Antwortzeiten verlängern. Wir bitten dies zu entschuldigen.", true)
+                                .setColor(Color.RED);
+                        channel.sendMessage(delayEmbed);
+                    }
+
+                    this.cachedTickets.put(channel.getIdAsString(), new Ticket(
+                            channel,
+                            embedMessage,
+                            null,
+                            "open",
+                            user,
+                            creator,
+                            membersUsers
+                    ));
+                });
+            });
+        });
+    }
+
+    public void createTicket(final User user, final User creator, final String iUser, final String iSubject, final String iSection, final String iMessage) {
+        CompletableFuture.runAsync(() -> {
+            final String id = "S" + this.getTicketName();
+            final Server server = this.bot.getServer();
+
+            final ServerTextChannel channel = new ServerTextChannelBuilder(server)
+                    .setCategory(server.getChannelCategoryById("794986203753611315").get())
+                    .setName("\uD83D\uDD13-ticket-" + id)
+                    .addPermissionOverwrite(user, Permissions.fromBitmask(PermissionType.SEND_MESSAGES.getValue() + PermissionType.READ_MESSAGES.getValue()))
+                    .addPermissionOverwrite(server.getRoleById("856910901193736203").get(), Permissions.fromBitmask(PermissionType.SEND_MESSAGES.getValue() + PermissionType.READ_MESSAGES.getValue()))
+                    .addPermissionOverwrite(server.getEveryoneRole(), Permissions.fromBitmask(0, PermissionType.READ_MESSAGES.getValue() + PermissionType.MENTION_EVERYONE.getValue() +
+                            PermissionType.USE_EXTERNAL_EMOJIS.getValue() + PermissionType.ADD_REACTIONS.getValue()))
+                    .setSlowmodeDelayInSeconds(5)
+                    .create()
+                    .join();
+            channel.sendMessage("<@" + user.getId() + ">").thenAccept(message -> {
+                message.delete();
+
+                channel.sendMessage(new EmbedBuilder().setDescription("Dieses Ticket wurde auf Eltown.net erstellt und wird nun im Discord-Support fortgeführt.").setColor(Color.DARK_GRAY));
+
+                final EmbedBuilder embed = new EmbedBuilder()
+                        .setTitle("Ticket #ticket-" + id + " eröffnet.")
+                        .setDescription("Hi <@" + user.getId() + ">!")
+                        .setThumbnail(user.getAvatar())
+                        .addField("Spieler", iUser, true)
+                        .addField("Bereich", iSection, true)
+                        .addField(iSubject, iMessage, false)
+                        .setFooter("Dies ist der Support-Chat deines Tickets. Um das Ticket zu schließen, klicke auf das Schloss-Symbol.")
+                        .setColor(Color.ORANGE);
+                channel.sendMessage(embed).thenAccept(embedMessage -> {
+                    final List<String> members = new ArrayList<>();
+                    final List<User> membersUsers = new ArrayList<>();
+                    members.add(user.getIdAsString());
+                    membersUsers.add(user);
+                    final Document document = new Document("ticket", channel.getIdAsString())
+                            .append("status", "open")
+                            .append("panel", embedMessage.getIdAsString())
+                            .append("close", "null")
+                            .append("user", user.getIdAsString())
+                            .append("creator", creator.getIdAsString())
+                            .append("members", members);
+                    this.ticketCollection.insertOne(document);
+
+                    embedMessage.addReaction("🔐");
+
+                    if (this.cachedTickets.values().size() >= 8) {
                         final EmbedBuilder delayEmbed = new EmbedBuilder()
                                 .setTitle("Achtung: Verzögerung")
                                 .setDescription("Ticket " + channel.getName().split("-")[2])
@@ -229,6 +300,14 @@ public class TicketAPI {
             ticket.setStatus("open");
             this.cachedTickets.put(channel.getIdAsString(), ticket);
         });
+    }
+
+    public int getTicketCount(final String user) {
+        final AtomicInteger integer = new AtomicInteger(0);
+        this.cachedTickets.values().forEach(p -> {
+            if (p.getTicketUser().getIdAsString().equals(user)) integer.addAndGet(1);
+        });
+        return integer.get();
     }
 
     private String getTicketName() {

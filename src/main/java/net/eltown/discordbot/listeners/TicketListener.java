@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import net.eltown.discordbot.Bot;
 import net.eltown.discordbot.components.api.TicketAPI;
-import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.reaction.ReactionAddEvent;
 import org.javacord.api.listener.message.reaction.ReactionAddListener;
@@ -32,8 +31,9 @@ public class TicketListener implements ReactionAddListener {
                 if (String.valueOf(event.getMessageId()).equals("857669348704649237")) {
                     if (event.getEmoji().equalsEmoji("🎫")) {
                         event.removeReaction();
-                        final Server server = event.getServer().get();
-                        this.bot.getTicketAPI().createTicket(user, user, server);
+                        if (this.bot.getTicketAPI().getTicketCount(user.getIdAsString()) <= 3) {
+                            this.bot.getTicketAPI().createTicket(user, user);
+                        }
                     }
                 } else if (channel.startsWith("🔓-ticket")) {
                     if (event.getEmoji().equalsEmoji("🔐")) {
