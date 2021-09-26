@@ -39,7 +39,7 @@ public class TicketListener {
                     });
                     break;
             }
-        }), "DiscordBot/TicketAPI/Listener", "discord.bot.ticket");
+        }), "Discord/Bot[Ticket]", "discord.bot.ticket");
     }
 
     public enum TicketCalls {

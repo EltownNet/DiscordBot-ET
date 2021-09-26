@@ -26,7 +26,7 @@ public class AuthListener {
                     } else request.answer(AuthCalls.CALLBACK_TOKEN_INVALID.name(), "null");
                     break;
             }
-        }), "DiscordBot/AuthAPI/Listener", "discord.bot.auth");
+        }), "Discord/Bot[Auth]", "discord.bot.auth");
     }
 
     public enum AuthCalls {
